@@ -1,0 +1,49 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: pytest (MySQL 8.4)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          # Credentials are only used by this disposable CI database.
+          MYSQL_ROOT_PASSWORD: ci-root-local-only
+          MYSQL_DATABASE: convenience_inventory_test
+          MYSQL_USER: inventory_ci
+          MYSQL_PASSWORD: ci-test-local-only
+        ports:
+          - 3306/tcp
+        options: >-
+          --health-cmd "mysqladmin ping --host=127.0.0.1 --protocol=TCP --silent"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      INVENTORY_DB_HOST: 127.0.0.1
+      INVENTORY_DB_USER: inventory_ci
+      INVENTORY_DB_PASSWORD: ci-test-local-only
+      INVENTORY_DB_NAME: convenience_inventory_demo
+      INVENTORY_TEST_DB_NAME: convenience_inventory_test
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Run pytest
+        env:
+          INVENTORY_DB_PORT: ${{ job.services.mysql.ports['3306'] }}
+        run: python -m pytest -v tests

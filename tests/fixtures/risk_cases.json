@@ -1,0 +1,481 @@
+{
+  "timezone": "Asia/Seoul",
+  "defaults": {
+    "as_of": "2026-11-18T12:00:00+09:00",
+    "confirmed_sales_dates": [
+      "2026-11-11",
+      "2026-11-12",
+      "2026-11-13",
+      "2026-11-14",
+      "2026-11-15",
+      "2026-11-16",
+      "2026-11-17"
+    ],
+    "lot": {
+      "registered_on": "2026-11-10",
+      "unit_cost_won": 1100
+    }
+  },
+  "notes": "input의 누락된 as_of와 confirmed_sales_dates는 defaults 값을 사용한다. 각 lot의 누락된 필드는 defaults.lot으로 채운다. sales_by_date에 누락된 날짜는 판매기록 0건으로 처리하고, 확인 여부는 별도로 판단한다. 기대값의 수요·예상량·예상 원가는 Fraction으로 읽을 수 있는 문자열이다. forecast와 daily_average의 null은 미산출, long_unsold의 null은 판정 보류를 뜻한다. 이 이름은 테스트 데이터용이다.",
+  "cases": [
+    {
+      "id": "S2-1",
+      "description": "판매 21개를 기한 순으로 배정",
+      "input": {
+        "sales_by_date": {
+          "2026-11-11": 7,
+          "2026-11-14": 7,
+          "2026-11-17": 7
+        },
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 5,
+            "expires_on": "2026-11-18"
+          },
+          {
+            "id": "B",
+            "remaining_quantity": 8,
+            "expires_on": "2026-11-20"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 21,
+        "daily_average": "3",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 13,
+        "sellable_quantity": 13,
+        "expired_quantity": 0,
+        "long_unsold": false,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "3",
+              "projected_unsold": "2",
+              "projected_waste_cost_won": "2200"
+            },
+            "disposal_risk": true
+          },
+          "B": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "6",
+              "projected_unsold": "2",
+              "projected_waste_cost_won": "2200"
+            },
+            "disposal_risk": true
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-2-confirmed-zero",
+      "description": "7일 모두 확인했고 판매 0개",
+      "input": {
+        "sales_by_date": {},
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 4,
+            "expires_on": "2026-11-20"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 0,
+        "daily_average": "0",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 4,
+        "sellable_quantity": 4,
+        "expired_quantity": 0,
+        "long_unsold": true,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "0",
+              "projected_unsold": "4",
+              "projected_waste_cost_won": "4400"
+            },
+            "disposal_risk": true
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-2-unconfirmed-zero",
+      "description": "같은 판매 0건이지만 하루의 판매기록이 미확인",
+      "input": {
+        "confirmed_sales_dates": [
+          "2026-11-11",
+          "2026-11-12",
+          "2026-11-13",
+          "2026-11-14",
+          "2026-11-15",
+          "2026-11-16"
+        ],
+        "sales_by_date": {},
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 4,
+            "expires_on": "2026-11-20"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 6,
+        "observed_sales_quantity": 0,
+        "daily_average": null,
+        "prediction_hold_reason": "unconfirmed_sales_days",
+        "on_hand_quantity": 4,
+        "sellable_quantity": 4,
+        "expired_quantity": 0,
+        "long_unsold": null,
+        "unsold_hold_reason": "unconfirmed_sales_days",
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": null,
+            "disposal_risk": null
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-3-at-23-59-59",
+      "description": "소비기한 당일 마지막 초에도 잔량 2개 판매 가능",
+      "input": {
+        "as_of": "2026-11-18T23:59:59+09:00",
+        "sales_by_date": {
+          "2026-11-14": 21
+        },
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 2,
+            "expires_on": "2026-11-18"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 21,
+        "daily_average": "3",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 2,
+        "sellable_quantity": 2,
+        "expired_quantity": 0,
+        "long_unsold": false,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "2",
+              "projected_unsold": "0",
+              "projected_waste_cost_won": "0"
+            },
+            "disposal_risk": false
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-3-at-midnight",
+      "description": "동일 재고를 자정에 조회하면 보유 2개, 판매 가능 0개",
+      "input": {
+        "as_of": "2026-11-19T00:00:00+09:00",
+        "sales_by_date": {
+          "2026-11-14": 21
+        },
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 2,
+            "expires_on": "2026-11-18"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 6,
+        "observed_sales_quantity": 21,
+        "daily_average": null,
+        "prediction_hold_reason": "unconfirmed_sales_days",
+        "on_hand_quantity": 2,
+        "sellable_quantity": 0,
+        "expired_quantity": 2,
+        "long_unsold": false,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expired",
+            "forecast": null,
+            "disposal_risk": false
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-4",
+      "description": "소비기한이 없는 상품의 장기 미판매",
+      "input": {
+        "sales_by_date": {},
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 5,
+            "expires_on": null
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 0,
+        "daily_average": "0",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 5,
+        "sellable_quantity": 5,
+        "expired_quantity": 0,
+        "long_unsold": true,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "no_expiry",
+            "forecast": null,
+            "disposal_risk": false
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-5",
+      "description": "최초 로트 등록 후 3일이라 예측과 장기 미판매 보류",
+      "input": {
+        "sales_by_date": {},
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 5,
+            "expires_on": "2026-11-20",
+            "registered_on": "2026-11-15"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 0,
+        "daily_average": null,
+        "prediction_hold_reason": "insufficient_observation",
+        "on_hand_quantity": 5,
+        "sellable_quantity": 5,
+        "expired_quantity": 0,
+        "long_unsold": null,
+        "unsold_hold_reason": "insufficient_observation",
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": null,
+            "disposal_risk": null
+          }
+        }
+      }
+    },
+    {
+      "id": "T019-expiry-3-vs-4-days",
+      "description": "최초 등록 후 정확히 7일이며 기한 3일은 임박, 4일은 임박 제외",
+      "input": {
+        "sales_by_date": {},
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 2,
+            "expires_on": "2026-11-21",
+            "registered_on": "2026-11-11"
+          },
+          {
+            "id": "B",
+            "remaining_quantity": 2,
+            "expires_on": "2026-11-22",
+            "registered_on": "2026-11-11"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 0,
+        "daily_average": "0",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 4,
+        "sellable_quantity": 4,
+        "expired_quantity": 0,
+        "long_unsold": true,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "0",
+              "projected_unsold": "2",
+              "projected_waste_cost_won": "2200"
+            },
+            "disposal_risk": true
+          },
+          "B": {
+            "expiry_status": "normal",
+            "forecast": {
+              "projected_sold": "0",
+              "projected_unsold": "2",
+              "projected_waste_cost_won": "2200"
+            },
+            "disposal_risk": false
+          }
+        }
+      }
+    },
+    {
+      "id": "T019-sales-window",
+      "description": "조회 당일과 8일 전의 판매 건 제외",
+      "input": {
+        "sales_by_date": {
+          "2026-11-10": 14,
+          "2026-11-11": 7,
+          "2026-11-17": 14,
+          "2026-11-18": 7
+        },
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 5,
+            "expires_on": "2026-11-18"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 21,
+        "daily_average": "3",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 5,
+        "sellable_quantity": 5,
+        "expired_quantity": 0,
+        "long_unsold": false,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "3",
+              "projected_unsold": "2",
+              "projected_waste_cost_won": "2200"
+            },
+            "disposal_risk": true
+          }
+        }
+      }
+    },
+    {
+      "id": "T019-known-sale-on-unconfirmed-day",
+      "description": "미확인일에 판매 1건이 있어 장기 미판매 대상 아님",
+      "input": {
+        "confirmed_sales_dates": [
+          "2026-11-11",
+          "2026-11-12",
+          "2026-11-13",
+          "2026-11-14",
+          "2026-11-15",
+          "2026-11-16"
+        ],
+        "sales_by_date": {
+          "2026-11-17": 1
+        },
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 4,
+            "expires_on": "2026-11-20"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 6,
+        "observed_sales_quantity": 1,
+        "daily_average": null,
+        "prediction_hold_reason": "unconfirmed_sales_days",
+        "on_hand_quantity": 4,
+        "sellable_quantity": 4,
+        "expired_quantity": 0,
+        "long_unsold": false,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": null,
+            "disposal_risk": null
+          }
+        }
+      }
+    },
+    {
+      "id": "T019-fractional-demand-allocated-once",
+      "description": "같은 소비기한의 로트에 이틀치 소수 수요 중복 배정 방지",
+      "input": {
+        "sales_by_date": {
+          "2026-11-17": 1
+        },
+        "lots": [
+          {
+            "id": "A",
+            "remaining_quantity": 1,
+            "expires_on": "2026-11-19",
+            "recorded_at_utc": "2026-11-10T03:00:00Z"
+          },
+          {
+            "id": "B",
+            "remaining_quantity": 1,
+            "expires_on": "2026-11-19",
+            "registered_on": "2026-11-11",
+            "recorded_at_utc": "2026-11-11T03:00:00Z"
+          }
+        ]
+      },
+      "expected": {
+        "confirmed_day_count": 7,
+        "observed_sales_quantity": 1,
+        "daily_average": "1/7",
+        "prediction_hold_reason": null,
+        "on_hand_quantity": 2,
+        "sellable_quantity": 2,
+        "expired_quantity": 0,
+        "long_unsold": false,
+        "unsold_hold_reason": null,
+        "lots": {
+          "A": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "2/7",
+              "projected_unsold": "5/7",
+              "projected_waste_cost_won": "5500/7"
+            },
+            "disposal_risk": true
+          },
+          "B": {
+            "expiry_status": "expiring",
+            "forecast": {
+              "projected_sold": "0",
+              "projected_unsold": "1",
+              "projected_waste_cost_won": "1100"
+            },
+            "disposal_risk": true
+          }
+        }
+      }
+    }
+  ]
+}
