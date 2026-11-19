@@ -1,6 +1,6 @@
 # 설계 결정 — 단일 편의점 재고 위험 및 프로모션 비교
 
-2026-11-18 · [확정 명세](spec.md)
+2026-11-18 · [확정 명세](../spec.md)
 
 ## 1. 백엔드와 DB
 
@@ -27,6 +27,6 @@
 
 ## 5. 프론트엔드 팀 합의와 검수 환경
 
-- **결정** — 프론트엔드 기술은 미정이다. 팀이 T002에서 기술·소스 경로·실행 명령·Flask 연동 방식을 정하고 [화면 계약](contracts/ui.md#팀-결정과-화면별-소스-경로)에 기록한다. 화면이 제공할 업무 결과와 입력은 해당 계약을 기준으로 한다.
+- **결정** — 프론트엔드 기술은 미정이다. 팀이 T002에서 기술·소스 경로·실행 명령·Flask 연동 방식을 정하고 [화면 계약](../front-end/contracts/ui.md#팀-결정과-화면별-소스-경로)에 기록한다. 화면이 제공할 업무 결과와 입력은 해당 계약을 기준으로 한다.
 - **근거** — 백엔드 담당은 기술 결정과 병렬로 Flask·MySQL 기반을 구축할 수 있고, 테스트 담당은 실제 MySQL에서 제약·차감·동시성을 준비할 수 있다. 화면 연동 검수는 기술과 전달 방식 합의 이후 확정한다.
-- **검수 환경** — 개발과 시연·테스트에 서로 다른 MySQL 스키마를 사용한다. GitHub Actions의 Linux 러너에서 테스트용 MySQL 서비스 컨테이너를 실행하고, 별도 스키마에서 `python -m pytest -v tests`를 실행한다. Flask 클라이언트와 MySQL 테스트 데이터는 pytest 픽스처로 재사용한다. [GitHub Actions 서비스 컨테이너](https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers)
+- **검수 환경** — 개발과 시연·테스트에 서로 다른 MySQL 스키마를 사용한다. GitHub Actions의 Linux 러너에서 테스트용 MySQL 서비스 컨테이너를 실행하고, 별도 스키마에서 `python -m pytest -v test`를 실행한다. Flask 클라이언트와 MySQL 테스트 데이터는 pytest 픽스처로 재사용한다. [GitHub Actions 서비스 컨테이너](https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers)

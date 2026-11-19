@@ -1,0 +1,431 @@
+{
+  "timezone": "Asia/Seoul",
+  "defaults": {
+    "as_of": "2026-11-18T12:00:00+09:00"
+  },
+  "notes": "comparison 사례는 이미 검토 대상인 상품의 가격·원가·판매 가능 수량을 사용한다. 소진 1개당 이익은 반올림 전 Fraction 문자열이다. recommendation의 null은 검토 유보, warning의 null은 해당 경고 없음이다. candidates의 위험 사유는 순서와 무관하게 비교하고 후보 목록은 배열 순서대로 비교한다. 필드명과 상태는 테스트 데이터용이다.",
+  "cases": [
+    {
+      "id": "S3-1",
+      "type": "comparison",
+      "description": "판매 가능 6개라 저수익 경고와 함께 2+1 검토",
+      "input": {
+        "sale_price_won": 2000,
+        "purchase_cost_won": 1100,
+        "sellable_quantity": 6
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 2000,
+            "cost_won": 1100,
+            "gross_profit_won": 900,
+            "profit_per_consumed_unit_won": "900",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 2000,
+            "cost_won": 2200,
+            "gross_profit_won": -200,
+            "profit_per_consumed_unit_won": "-100",
+            "can_form": true,
+            "warning": "loss"
+          },
+          "two_plus_one": {
+            "revenue_won": 4000,
+            "cost_won": 3300,
+            "gross_profit_won": 700,
+            "profit_per_consumed_unit_won": "700/3",
+            "can_form": true,
+            "warning": "low_profit"
+          }
+        },
+        "recommendation": "two_plus_one"
+      }
+    },
+    {
+      "id": "S3-2",
+      "type": "comparison",
+      "description": "판매 가능 2개라 2+1 구성 부족, 가능한 1+1은 손실",
+      "input": {
+        "sale_price_won": 2000,
+        "purchase_cost_won": 1100,
+        "sellable_quantity": 2
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 2000,
+            "cost_won": 1100,
+            "gross_profit_won": 900,
+            "profit_per_consumed_unit_won": "900",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 2000,
+            "cost_won": 2200,
+            "gross_profit_won": -200,
+            "profit_per_consumed_unit_won": "-100",
+            "can_form": true,
+            "warning": "loss"
+          },
+          "two_plus_one": {
+            "revenue_won": 4000,
+            "cost_won": 3300,
+            "gross_profit_won": 700,
+            "profit_per_consumed_unit_won": "700/3",
+            "can_form": false,
+            "warning": "low_profit"
+          }
+        },
+        "recommendation": null
+      }
+    },
+    {
+      "id": "S3-3",
+      "type": "candidates",
+      "description": "겹치는 위험 사유는 상품 한 건으로 합친다. 이전에 장기 미판매였어도 현재 만료 재고만 있으면 제외한다.",
+      "input": {
+        "products": [
+          {
+            "product_id": 102,
+            "long_unsold": true,
+            "lots": [
+              {
+                "expires_on": "2026-11-17",
+                "remaining_quantity": 6,
+                "disposal_risk": false
+              }
+            ]
+          },
+          {
+            "product_id": 101,
+            "long_unsold": true,
+            "lots": [
+              {
+                "expires_on": "2026-11-19",
+                "remaining_quantity": 4,
+                "disposal_risk": true
+              },
+              {
+                "expires_on": "2026-11-20",
+                "remaining_quantity": 2,
+                "disposal_risk": true
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "candidates": [
+          {
+            "product_id": 101,
+            "risk_reasons": [
+              "disposal_risk",
+              "long_unsold"
+            ],
+            "nearest_risk_expiry": "2026-11-19"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S3-4-break-even",
+      "type": "comparison",
+      "description": "1+1 개당 이익이 0원이면 손익분기",
+      "input": {
+        "sale_price_won": 2000,
+        "purchase_cost_won": 1000,
+        "sellable_quantity": 3
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 2000,
+            "cost_won": 1000,
+            "gross_profit_won": 1000,
+            "profit_per_consumed_unit_won": "1000",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 2000,
+            "cost_won": 2000,
+            "gross_profit_won": 0,
+            "profit_per_consumed_unit_won": "0",
+            "can_form": true,
+            "warning": "break_even"
+          },
+          "two_plus_one": {
+            "revenue_won": 4000,
+            "cost_won": 3000,
+            "gross_profit_won": 1000,
+            "profit_per_consumed_unit_won": "1000/3",
+            "can_form": true,
+            "warning": "low_profit"
+          }
+        },
+        "recommendation": "two_plus_one"
+      }
+    },
+    {
+      "id": "S3-4-exactly-half",
+      "type": "comparison",
+      "description": "2+1 개당 이익 1,000원이 정상 이익의 정확히 50%면 저수익 경고 없음",
+      "input": {
+        "sale_price_won": 3000,
+        "purchase_cost_won": 1000,
+        "sellable_quantity": 3
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 3000,
+            "cost_won": 1000,
+            "gross_profit_won": 2000,
+            "profit_per_consumed_unit_won": "2000",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 3000,
+            "cost_won": 2000,
+            "gross_profit_won": 1000,
+            "profit_per_consumed_unit_won": "500",
+            "can_form": true,
+            "warning": "low_profit"
+          },
+          "two_plus_one": {
+            "revenue_won": 6000,
+            "cost_won": 3000,
+            "gross_profit_won": 3000,
+            "profit_per_consumed_unit_won": "1000",
+            "can_form": true,
+            "warning": null
+          }
+        },
+        "recommendation": "two_plus_one"
+      }
+    },
+    {
+      "id": "T031-just-below-half",
+      "type": "comparison",
+      "description": "판매가 2,999원에서 반올림 전 2+1 이익이 50% 미만",
+      "input": {
+        "sale_price_won": 2999,
+        "purchase_cost_won": 1000,
+        "sellable_quantity": 3
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 2999,
+            "cost_won": 1000,
+            "gross_profit_won": 1999,
+            "profit_per_consumed_unit_won": "1999",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 2999,
+            "cost_won": 2000,
+            "gross_profit_won": 999,
+            "profit_per_consumed_unit_won": "999/2",
+            "can_form": true,
+            "warning": "low_profit"
+          },
+          "two_plus_one": {
+            "revenue_won": 5998,
+            "cost_won": 3000,
+            "gross_profit_won": 2998,
+            "profit_per_consumed_unit_won": "2998/3",
+            "can_form": true,
+            "warning": "low_profit"
+          }
+        },
+        "recommendation": "two_plus_one"
+      }
+    },
+    {
+      "id": "T031-just-above-half",
+      "type": "comparison",
+      "description": "판매가 3,001원에서 반올림 전 2+1 이익이 50% 초과",
+      "input": {
+        "sale_price_won": 3001,
+        "purchase_cost_won": 1000,
+        "sellable_quantity": 3
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 3001,
+            "cost_won": 1000,
+            "gross_profit_won": 2001,
+            "profit_per_consumed_unit_won": "2001",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 3001,
+            "cost_won": 2000,
+            "gross_profit_won": 1001,
+            "profit_per_consumed_unit_won": "1001/2",
+            "can_form": true,
+            "warning": "low_profit"
+          },
+          "two_plus_one": {
+            "revenue_won": 6002,
+            "cost_won": 3000,
+            "gross_profit_won": 3002,
+            "profit_per_consumed_unit_won": "3002/3",
+            "can_form": true,
+            "warning": null
+          }
+        },
+        "recommendation": "two_plus_one"
+      }
+    },
+    {
+      "id": "T031-positive-one-plus-one-only",
+      "type": "comparison",
+      "description": "2+1 수량은 부족하지만 1+1 이익이 양수라 1+1 검토",
+      "input": {
+        "sale_price_won": 3000,
+        "purchase_cost_won": 1000,
+        "sellable_quantity": 2
+      },
+      "expected": {
+        "offers": {
+          "regular": {
+            "revenue_won": 3000,
+            "cost_won": 1000,
+            "gross_profit_won": 2000,
+            "profit_per_consumed_unit_won": "2000",
+            "can_form": true,
+            "warning": null
+          },
+          "one_plus_one": {
+            "revenue_won": 3000,
+            "cost_won": 2000,
+            "gross_profit_won": 1000,
+            "profit_per_consumed_unit_won": "500",
+            "can_form": true,
+            "warning": "low_profit"
+          },
+          "two_plus_one": {
+            "revenue_won": 6000,
+            "cost_won": 3000,
+            "gross_profit_won": 3000,
+            "profit_per_consumed_unit_won": "1000",
+            "can_form": false,
+            "warning": null
+          }
+        },
+        "recommendation": "one_plus_one"
+      }
+    },
+    {
+      "id": "T031-candidate-order",
+      "type": "candidates",
+      "description": "폐기 위험 기한이 빠른 순, 같은 기한은 상품 ID 순, 장기 미판매만 있으면 뒤",
+      "input": {
+        "products": [
+          {
+            "product_id": 130,
+            "long_unsold": true,
+            "lots": [
+              {
+                "expires_on": null,
+                "remaining_quantity": 5,
+                "disposal_risk": false
+              }
+            ]
+          },
+          {
+            "product_id": 121,
+            "long_unsold": false,
+            "lots": [
+              {
+                "expires_on": "2026-11-20",
+                "remaining_quantity": 2,
+                "disposal_risk": true
+              },
+              {
+                "expires_on": "2026-11-19",
+                "remaining_quantity": 3,
+                "disposal_risk": true
+              }
+            ]
+          },
+          {
+            "product_id": 110,
+            "long_unsold": false,
+            "lots": [
+              {
+                "expires_on": "2026-11-20",
+                "remaining_quantity": 6,
+                "disposal_risk": true
+              }
+            ]
+          },
+          {
+            "product_id": 113,
+            "long_unsold": false,
+            "lots": [
+              {
+                "expires_on": "2026-11-19",
+                "remaining_quantity": 5,
+                "disposal_risk": true
+              }
+            ]
+          },
+          {
+            "product_id": 105,
+            "long_unsold": false,
+            "lots": [
+              {
+                "expires_on": "2026-11-21",
+                "remaining_quantity": 5,
+                "disposal_risk": false
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "candidates": [
+          {
+            "product_id": 113,
+            "risk_reasons": [
+              "disposal_risk"
+            ],
+            "nearest_risk_expiry": "2026-11-19"
+          },
+          {
+            "product_id": 121,
+            "risk_reasons": [
+              "disposal_risk"
+            ],
+            "nearest_risk_expiry": "2026-11-19"
+          },
+          {
+            "product_id": 110,
+            "risk_reasons": [
+              "disposal_risk"
+            ],
+            "nearest_risk_expiry": "2026-11-20"
+          },
+          {
+            "product_id": 130,
+            "risk_reasons": [
+              "long_unsold"
+            ],
+            "nearest_risk_expiry": null
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -230,6 +230,21 @@ function Get-FeaturePathsEnv {
         $currentBranch = Split-Path -Leaf $featureDirTrimmed
     }
 
+    # This project's feature-root artifacts use the team role directories.
+    # Keep standard names available for other Spec Kit features.
+    $research = if (Test-Path -LiteralPath (Join-Path $featureDir 'backend/research.md') -PathType Leaf) {
+        'backend/research.md'
+    } else { 'research.md' }
+    $dataModel = if (Test-Path -LiteralPath (Join-Path $featureDir 'db/data-model.md') -PathType Leaf) {
+        'db/data-model.md'
+    } else { 'data-model.md' }
+    $quickstart = if (Test-Path -LiteralPath (Join-Path $featureDir 'test/quickstart.md') -PathType Leaf) {
+        'test/quickstart.md'
+    } else { 'quickstart.md' }
+    $contracts = if (Test-Path -LiteralPath (Join-Path $featureDir 'front-end/contracts') -PathType Container) {
+        'front-end/contracts'
+    } else { 'contracts' }
+
     [PSCustomObject]@{
         REPO_ROOT     = $repoRoot
         CURRENT_BRANCH = $currentBranch
@@ -237,10 +252,14 @@ function Get-FeaturePathsEnv {
         FEATURE_SPEC  = Join-Path $featureDir 'spec.md'
         IMPL_PLAN     = Join-Path $featureDir 'plan.md'
         TASKS         = Join-Path $featureDir 'tasks.md'
-        RESEARCH      = Join-Path $featureDir 'research.md'
-        DATA_MODEL    = Join-Path $featureDir 'data-model.md'
-        QUICKSTART    = Join-Path $featureDir 'quickstart.md'
-        CONTRACTS_DIR = Join-Path $featureDir 'contracts'
+        RESEARCH      = Join-Path $featureDir $research
+        RESEARCH_RELATIVE = $research
+        DATA_MODEL    = Join-Path $featureDir $dataModel
+        DATA_MODEL_RELATIVE = $dataModel
+        QUICKSTART    = Join-Path $featureDir $quickstart
+        QUICKSTART_RELATIVE = $quickstart
+        CONTRACTS_DIR = Join-Path $featureDir $contracts
+        CONTRACTS_DIR_RELATIVE = $contracts
     }
 }
 

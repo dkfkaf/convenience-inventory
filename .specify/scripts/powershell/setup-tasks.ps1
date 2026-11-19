@@ -48,12 +48,12 @@ if (-not (Test-Path -LiteralPath $paths.FEATURE_SPEC -PathType Leaf)) {
 
 # Build available docs list
 $docs = @()
-if (Test-Path -LiteralPath $paths.RESEARCH) { $docs += 'research.md' }
-if (Test-Path -LiteralPath $paths.DATA_MODEL) { $docs += 'data-model.md' }
+if (Test-Path -LiteralPath $paths.RESEARCH) { $docs += $paths.RESEARCH_RELATIVE }
+if (Test-Path -LiteralPath $paths.DATA_MODEL) { $docs += $paths.DATA_MODEL_RELATIVE }
 if ((Test-Path -LiteralPath $paths.CONTRACTS_DIR) -and (Get-ChildItem -LiteralPath $paths.CONTRACTS_DIR -ErrorAction SilentlyContinue | Select-Object -First 1)) {
-    $docs += 'contracts/'
+    $docs += ($paths.CONTRACTS_DIR_RELATIVE + '/')
 }
-if (Test-Path -LiteralPath $paths.QUICKSTART) { $docs += 'quickstart.md' }
+if (Test-Path -LiteralPath $paths.QUICKSTART) { $docs += $paths.QUICKSTART_RELATIVE }
 
 # Resolve tasks template through override stack
 $tasksTemplate = Resolve-Template -TemplateName 'tasks-template' -RepoRoot $paths.REPO_ROOT
@@ -86,8 +86,8 @@ if ($Json) {
     # line along with the return value and left AVAILABLE_DOCS empty. Drop
     # only the boolean so the per-document lines reach stdout like the
     # bash and Python twins.
-    Test-FileExists -Path $paths.RESEARCH -Description 'research.md' | Where-Object { $_ -isnot [bool] }
-    Test-FileExists -Path $paths.DATA_MODEL -Description 'data-model.md' | Where-Object { $_ -isnot [bool] }
-    Test-DirHasFiles -Path $paths.CONTRACTS_DIR -Description 'contracts/' | Where-Object { $_ -isnot [bool] }
-    Test-FileExists -Path $paths.QUICKSTART -Description 'quickstart.md' | Where-Object { $_ -isnot [bool] }
+    Test-FileExists -Path $paths.RESEARCH -Description $paths.RESEARCH_RELATIVE | Where-Object { $_ -isnot [bool] }
+    Test-FileExists -Path $paths.DATA_MODEL -Description $paths.DATA_MODEL_RELATIVE | Where-Object { $_ -isnot [bool] }
+    Test-DirHasFiles -Path $paths.CONTRACTS_DIR -Description ($paths.CONTRACTS_DIR_RELATIVE + '/') | Where-Object { $_ -isnot [bool] }
+    Test-FileExists -Path $paths.QUICKSTART -Description $paths.QUICKSTART_RELATIVE | Where-Object { $_ -isnot [bool] }
 }

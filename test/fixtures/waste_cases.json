@@ -1,0 +1,372 @@
+{
+  "timezone": "Asia/Seoul",
+  "defaults": {
+    "as_of": "2026-11-18T12:00:00+09:00",
+    "product": {
+      "id": 101,
+      "sale_price_won": 2000,
+      "purchase_cost_won": 1100
+    },
+    "lot": {
+      "id": "A",
+      "registered_on": "2026-11-10",
+      "expires_on": "2026-11-17",
+      "remaining_quantity": 5,
+      "unit_cost_won": 1100
+    },
+    "disposal": {
+      "lot_id": "A",
+      "disposed_on": "2026-11-18",
+      "quantity": 3,
+      "reason": "소비기한 경과",
+      "request_key": "00000000-0000-4000-8000-000000000001"
+    },
+    "summary_range": {
+      "from": "2026-11-18",
+      "to": "2026-11-18"
+    }
+  },
+  "notes": "사례별 input은 defaults에서 시작하고 lot과 product는 명시한 필드만 바꾼다. 초기 로트의 등록 수량과 초기 증가 이력은 remaining_quantity와 같다. 폐기 동작은 defaults.disposal에 개별 동작의 필드를 덮어쓴다. added_movements는 초기 등록 이후의 이력이다. cause_request_key로 원인 기록을 찾고 실제 외래 키도 대조한다. same_record_returned_for는 1부터 시작하는 동작 순번이다. summary_range는 양끝을 포함한다. allowed_outcomes의 operation_results는 요청을 보낸 순서대로 비교한다. 필드명과 상태는 테스트 데이터용이다.",
+  "cases": [
+    {
+      "id": "S4-1",
+      "description": "만료 로트 5개 중 3개 폐기 후 잔량·손실·이력 확인",
+      "input": {
+        "operations": [
+          {
+            "type": "record_disposal"
+          }
+        ]
+      },
+      "expected": {
+        "operation_results": [
+          "recorded"
+        ],
+        "remaining_quantity": {
+          "A": 2
+        },
+        "lot_unit_cost_won": {
+          "A": 1100
+        },
+        "waste_records": [
+          {
+            "lot_id": "A",
+            "disposed_on": "2026-11-18",
+            "quantity": 3,
+            "reason": "소비기한 경과",
+            "request_key": "00000000-0000-4000-8000-000000000001",
+            "unit_cost_won": 1100
+          }
+        ],
+        "sales": [],
+        "added_movements": [
+          {
+            "kind": "WASTE",
+            "lot_id": "A",
+            "quantity_delta": -3,
+            "cause_request_key": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "waste_summary": {
+          "quantity": 3,
+          "loss_won": 3300
+        }
+      }
+    },
+    {
+      "id": "S4-2-replay",
+      "description": "동일 키와 동일 입력을 다시 보내면 기존 폐기 기록이 반환되고 추가 차감 0회",
+      "input": {
+        "operations": [
+          {
+            "type": "record_disposal"
+          },
+          {
+            "type": "record_disposal"
+          }
+        ]
+      },
+      "expected": {
+        "operation_results": [
+          "recorded",
+          "existing_record"
+        ],
+        "remaining_quantity": {
+          "A": 2
+        },
+        "lot_unit_cost_won": {
+          "A": 1100
+        },
+        "waste_records": [
+          {
+            "lot_id": "A",
+            "disposed_on": "2026-11-18",
+            "quantity": 3,
+            "reason": "소비기한 경과",
+            "request_key": "00000000-0000-4000-8000-000000000001",
+            "unit_cost_won": 1100
+          }
+        ],
+        "sales": [],
+        "added_movements": [
+          {
+            "kind": "WASTE",
+            "lot_id": "A",
+            "quantity_delta": -3,
+            "cause_request_key": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "waste_summary": {
+          "quantity": 3,
+          "loss_won": 3300
+        },
+        "same_record_returned_for": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "id": "S4-2-overdraw",
+      "description": "잔량 2개에 새로운 요청 키로 폐기 3개 재요청",
+      "input": {
+        "operations": [
+          {
+            "type": "record_disposal"
+          },
+          {
+            "type": "record_disposal",
+            "request_key": "00000000-0000-4000-8000-000000000002"
+          }
+        ]
+      },
+      "expected": {
+        "operation_results": [
+          "recorded",
+          "insufficient_stock"
+        ],
+        "remaining_quantity": {
+          "A": 2
+        },
+        "lot_unit_cost_won": {
+          "A": 1100
+        },
+        "waste_records": [
+          {
+            "lot_id": "A",
+            "disposed_on": "2026-11-18",
+            "quantity": 3,
+            "reason": "소비기한 경과",
+            "request_key": "00000000-0000-4000-8000-000000000001",
+            "unit_cost_won": 1100
+          }
+        ],
+        "sales": [],
+        "added_movements": [
+          {
+            "kind": "WASTE",
+            "lot_id": "A",
+            "quantity_delta": -3,
+            "cause_request_key": "00000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "waste_summary": {
+          "quantity": 3,
+          "loss_won": 3300
+        }
+      }
+    },
+    {
+      "id": "S4-3",
+      "description": "현재 상품 원가를 1,400원으로 올려도 기존 폐기는 3,300원, 새 로트는 1,400원",
+      "input": {
+        "operations": [
+          {
+            "type": "record_disposal"
+          },
+          {
+            "type": "update_product_cost",
+            "purchase_cost_won": 1400
+          },
+          {
+            "type": "register_lot",
+            "lot_id": "B",
+            "quantity": 2,
+            "expires_on": "2026-11-25",
+            "request_key": "00000000-0000-4000-8000-000000000004"
+          }
+        ]
+      },
+      "expected": {
+        "operation_results": [
+          "recorded",
+          "updated",
+          "registered"
+        ],
+        "remaining_quantity": {
+          "A": 2,
+          "B": 2
+        },
+        "lot_unit_cost_won": {
+          "A": 1100,
+          "B": 1400
+        },
+        "waste_records": [
+          {
+            "lot_id": "A",
+            "disposed_on": "2026-11-18",
+            "quantity": 3,
+            "reason": "소비기한 경과",
+            "request_key": "00000000-0000-4000-8000-000000000001",
+            "unit_cost_won": 1100
+          }
+        ],
+        "sales": [],
+        "added_movements": [
+          {
+            "kind": "WASTE",
+            "lot_id": "A",
+            "quantity_delta": -3,
+            "cause_request_key": "00000000-0000-4000-8000-000000000001"
+          },
+          {
+            "kind": "RECEIPT",
+            "lot_id": "B",
+            "quantity_delta": 2,
+            "cause_request_key": "00000000-0000-4000-8000-000000000004"
+          }
+        ],
+        "waste_summary": {
+          "quantity": 3,
+          "loss_won": 3300
+        },
+        "current_product_unit_cost_won": 1400
+      }
+    },
+    {
+      "id": "T025-concurrent-sale-and-disposal",
+      "description": "판매 가능한 잔량 5개에 각각 4개씩 판매와 폐기 요청",
+      "input": {
+        "lot": {
+          "expires_on": "2026-11-20"
+        },
+        "execution": "concurrent",
+        "separate_connections": true,
+        "operations": [
+          {
+            "type": "record_sale",
+            "product_id": 101,
+            "quantity": 4,
+            "request_key": "00000000-0000-4000-8000-000000000003"
+          },
+          {
+            "type": "record_disposal",
+            "quantity": 4,
+            "reason": "파손"
+          }
+        ]
+      },
+      "allowed_outcomes": [
+        {
+          "operation_results": [
+            "recorded",
+            "insufficient_stock"
+          ],
+          "remaining_quantity": {
+            "A": 1
+          },
+          "lot_unit_cost_won": {
+            "A": 1100
+          },
+          "waste_records": [],
+          "sales": [
+            {
+              "product_id": 101,
+              "sold_on": "2026-11-18",
+              "quantity": 4,
+              "request_key": "00000000-0000-4000-8000-000000000003"
+            }
+          ],
+          "added_movements": [
+            {
+              "kind": "SALE",
+              "lot_id": "A",
+              "quantity_delta": -4,
+              "cause_request_key": "00000000-0000-4000-8000-000000000003"
+            }
+          ],
+          "waste_summary": {
+            "quantity": 0,
+            "loss_won": 0
+          }
+        },
+        {
+          "operation_results": [
+            "insufficient_stock",
+            "recorded"
+          ],
+          "remaining_quantity": {
+            "A": 1
+          },
+          "lot_unit_cost_won": {
+            "A": 1100
+          },
+          "waste_records": [
+            {
+              "lot_id": "A",
+              "disposed_on": "2026-11-18",
+              "quantity": 4,
+              "reason": "파손",
+              "request_key": "00000000-0000-4000-8000-000000000001",
+              "unit_cost_won": 1100
+            }
+          ],
+          "sales": [],
+          "added_movements": [
+            {
+              "kind": "WASTE",
+              "lot_id": "A",
+              "quantity_delta": -4,
+              "cause_request_key": "00000000-0000-4000-8000-000000000001"
+            }
+          ],
+          "waste_summary": {
+            "quantity": 4,
+            "loss_won": 4400
+          }
+        }
+      ]
+    },
+    {
+      "id": "T025-movement-write-rollback",
+      "description": "재고 차감과 폐기 기록 뒤 변동이력 저장 실패 시 전체 롤백",
+      "input": {
+        "operations": [
+          {
+            "type": "record_disposal",
+            "simulate_failure": "inventory_movement_write"
+          }
+        ],
+        "verify_from_fresh_connection": true
+      },
+      "expected": {
+        "operation_results": [
+          "movement_write_failed"
+        ],
+        "remaining_quantity": {
+          "A": 5
+        },
+        "lot_unit_cost_won": {
+          "A": 1100
+        },
+        "waste_records": [],
+        "sales": [],
+        "added_movements": [],
+        "waste_summary": {
+          "quantity": 0,
+          "loss_won": 0
+        }
+      }
+    }
+  ]
+}
