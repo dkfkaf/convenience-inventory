@@ -28,7 +28,7 @@
 **목표** — Flask·MySQL 준비와 프론트엔드 팀 합의를 병렬로 진행한다.
 
 - [ ] T001 [P] 백엔드 — Python 3.12용 Flask 3.1 계열, `mysql-connector-python`, tzdata를 `backend/requirements.txt`에 등록하고, `.gitignore`에 가상환경·Python 캐시·로컬 비밀 설정 파일을 제외하도록 설정한다.
-- [ ] T002 [P] 프론트엔드 — 백엔드·테스트 담당과 기술 스택, 화면별 소스 경로, 로컬 실행·빌드 방법, Flask 입력·응답 형식, 저장 후 동작과 요청 보호 방식을 합의한다. `front-end/contracts/ui.md`에 결정과 경로를 기록하고 `tasks.md`의 해당 작업에 실제 수정 파일을 적는다.
+- [ ] T002 [P] 프론트엔드 — 확정된 React·Tailwind CSS·Vite를 기준으로 백엔드·테스트 담당과 화면별 소스 경로, 로컬 실행·빌드 명령과 접속 주소, Flask 요청·응답 형식, 저장 후 동작과 요청 보호 방식을 합의한다. `front-end/contracts/ui.md`에 결정과 경로를 기록하고 `tasks.md`의 해당 작업에 실제 수정 파일을 적는다.
 - [x] T003 [P] 테스트(CI) — `test/requirements-dev.txt`에 `pytest`를 추가하고 `test/test_environment.py`에 MySQL 8.4 테스트 스키마 연결을 확인하는 테스트를 작성한다. 개발·시연 스키마와 구분된 테스트 값을 사용한다.
 
 ## Phase 2 — 공통 기반
@@ -143,7 +143,7 @@ flowchart LR
 
 1. **T003 · 테스트 환경 확인** — `test/requirements-dev.txt`에 `pytest`를 추가하고 `test/test_environment.py`에 연결 검사를 `test_` 함수로 작성한다. `python -m pytest -v test/test_environment.py`로 실행한다. `INVENTORY_TEST_DB_NAME`을 명시하고, 시연·개발용 `INVENTORY_DB_NAME`과 다른지 쓰기 전에 검사한다. 실제 연결에서도 `SELECT DATABASE()`가 지정한 테스트 스키마를 가리키고 MySQL 8.4에 연결되는지 확인한다. 필수 설정이 비어 있거나 연결이 실패하면 원인을 보여주는 실패여야 한다. 값 확인 과정에서 비밀번호는 로그에 찍지 않는다.
 2. **T009 · 공통 검수 자료와 DB 제약 검사** — `test/conftest.py`에 테스트별 앱 설정, Flask 테스트 클라이언트, 고정 시계를 `@pytest.fixture`로 등록한다. `test/helpers.py`에 상품·로트·판매 자료 생성 함수를 둔다. 기본 기준일은 `2026-11-18`의 점포 현지 날짜로 두고 자정 테스트에서는 바꿔 쓴다. `test/test_environment.py`에서 존재하지 않는 상품을 참조하는 로트, 음수 잔량 같은 유효하지 않은 쓰기가 거절되고, `init-db`를 다시 실행해도 기존 테스트 기록이 남는지 확인한다. 각 테스트는 자료를 따로 만들고 사용한 연결과 테스트에서 생성한 데이터를 정리한다. 서로 다른 연결에서 커밋하는 동시성 검수에는 전용 스키마와 격리된 테스트 데이터를 사용한다.
-3. **T010 · PR에서 자동 검수 실행** — `.github/workflows/tests.yml`에 기본 브랜치 대상 PR, Linux 러너, MySQL 8.4 서비스 컨테이너, Python 3.12 설정을 작성한다. MySQL 준비를 확인하고 `backend/requirements.txt`와 `test/requirements-dev.txt`를 설치한 뒤 테스트 전용 연결값으로 `python -m pytest -v test`를 실행한다. 정상 테스트는 성공, 의도적으로 틀린 단언이나 DB 연결 실패는 실패로 표시되는지 확인한다. 로컬과 CI에서 같은 테스트 명령을 사용한다. 워크플로 작성과 문법 검사를 마쳤다. T001·T009와 기능별 테스트 연결 후 실제 PR의 Checks에서 실행 결과를 검증한다.
+3. **T010 · PR에서 자동 검수 실행** — `.github/workflows/tests.yml`에 기본 브랜치 대상 PR, Linux 러너, MySQL 8.4 서비스 컨테이너, Python 3.12 설정을 작성한다. MySQL 준비를 확인하고 `backend/requirements.txt`와 `test/requirements-dev.txt`를 설치한 뒤 테스트 전용 연결값으로 `python -m pytest -v test`를 실행한다. 정상 테스트는 성공, 의도적으로 틀린 단언이나 DB 연결 실패는 실패로 표시되는지 확인한다. 로컬과 CI에서 같은 테스트 명령을 사용한다. 워크플로 작성과 문법 검사를 마쳤다. 첫 MVP의 기본 브랜치 대상 통합 PR에서 T001·T009 기반, T011·T012 테스트, T013·T014 판매 서비스, T016 화면 연동을 함께 반영한 뒤 Checks에서 전체 pytest 통과를 확인한다.
 
 ### US1 · 상품·재고·판매
 
