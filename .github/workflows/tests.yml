@@ -29,9 +29,12 @@ jobs:
             Write-Output '::notice::pytest skipped: backend/requirements.txt is missing (T001).'
             'pytest skipped: `backend/requirements.txt` is missing (T001).' >> $env:GITHUB_STEP_SUMMARY
           }
+      - name: Report current test scope
+        if: steps.requirements.outputs.ready == 'true'
+        run: echo 'Only the T003 database connection test runs. Full pytest waits for T009, T013, and T014.' >> "$GITHUB_STEP_SUMMARY"
 
   tests:
-    name: pytest (MySQL 8.4)
+    name: T003 · 테스트 DB 연결
     needs: prerequisites
     if: ${{ needs.prerequisites.outputs.ready == 'true' }}
     runs-on: ubuntu-latest
@@ -66,7 +69,7 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: python -m pip install -r backend/requirements.txt -r test/requirements-dev.txt
-      - name: Run pytest
+      - name: Run T003 connection test
         env:
           INVENTORY_DB_PORT: ${{ job.services.mysql.ports['3306'] }}
-        run: python -m pytest -v test
+        run: python -m pytest -v test/test_environment.py
