@@ -10,7 +10,8 @@ mysql_command=("$@")
 schema_file="$(dirname -- "${BASH_SOURCE[0]}")/schema.sql"
 
 sql() {
-    "${mysql_command[@]}" --batch --skip-column-names "$@"
+    # Normalize line endings from the Windows MySQL client for local runs.
+    "${mysql_command[@]}" --batch --skip-column-names "$@" | sed 's/\r$//'
 }
 
 assert_equal() {
