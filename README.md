@@ -24,7 +24,7 @@
 
 ## 실행과 테스트
 
-백엔드 의존성과 MySQL 스키마가 준비되면 저장소 루트에서 다음 명령을 실행해요. 테스트에는 개발·시연용 DB와 구분한 테스트 전용 스키마를 사용해요. DB 설정과 시연 실행 절차는 [실행·검수 가이드](test/quickstart.md)에 있어요.
+백엔드 기능과 공통 테스트 환경이 준비되면 저장소 루트에서 다음 명령으로 전체 테스트를 실행해요. 테스트에는 개발·시연용 DB와 구분한 테스트 전용 스키마를 사용해요. DB 설정과 시연 실행 절차는 [실행·검수 가이드](test/quickstart.md)에 있어요.
 
 ```powershell
 python -m pip install -r backend/requirements.txt -r test/requirements-dev.txt
@@ -34,7 +34,7 @@ python -m pytest -v test
 `main` 대상 PR에서는 다음 GitHub Actions 검사를 각각 실행해요.
 
 - [DB 스키마](.github/workflows/db.yml)는 새 MySQL 8.4 테스트 DB에서 `db/schema.sql`을 적용해 테이블 6개, 재적용 후 데이터 보존, 대표 제약 위반 거부를 확인해요.
-- [백엔드 pytest](.github/workflows/tests.yml)는 `backend/requirements.txt`가 있을 때 별도의 MySQL 8.4 테스트 DB에서 전체 pytest를 실행해요. 파일이 아직 없으면 사유를 워크플로 요약에 남기고 pytest 작업을 `skipped`로 표시해요.
+- [백엔드 pytest](.github/workflows/tests.yml)는 `backend/requirements.txt`가 있을 때 별도의 MySQL 8.4 테스트 DB에서 T003 연결 검사(`test/test_environment.py`)만 실행해요. 파일이 아직 없으면 사유를 워크플로 요약에 남기고 검사 작업을 `skipped`로 표시해요. 전체 pytest는 공통 테스트 환경과 판매 기능을 연결한 첫 MVP PR에서 확인해요.
 
 ## GitHub 협업
 

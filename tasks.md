@@ -144,7 +144,7 @@ flowchart LR
 
 1. **T003 · 테스트 환경 확인** — `test/requirements-dev.txt`에 `pytest`를 추가하고 `test/test_environment.py`에 연결 검사를 `test_` 함수로 작성한다. `python -m pytest -v test/test_environment.py`로 실행한다. `INVENTORY_TEST_DB_NAME`을 명시하고, 시연·개발용 `INVENTORY_DB_NAME`과 다른지 쓰기 전에 검사한다. 실제 연결에서도 `SELECT DATABASE()`가 지정한 테스트 스키마를 가리키고 MySQL 8.4에 연결되는지 확인한다. 필수 설정이 비어 있거나 연결이 실패하면 원인을 보여주는 실패여야 한다. 값 확인 과정에서 비밀번호는 로그에 찍지 않는다.
 2. **T009 · 공통 검수 자료와 DB 제약 검사** — `test/conftest.py`에 테스트별 앱 설정, Flask 테스트 클라이언트, 고정 시계를 `@pytest.fixture`로 등록한다. `test/helpers.py`에 상품·로트·판매 자료 생성 함수를 둔다. 기본 기준일은 `2026-11-18`의 점포 현지 날짜로 두고 자정 테스트에서는 바꿔 쓴다. `test/test_environment.py`에서 존재하지 않는 상품을 참조하는 로트, 음수 잔량 같은 유효하지 않은 쓰기가 거절되고, `init-db`를 다시 실행해도 기존 테스트 기록이 남는지 확인한다. 각 테스트는 자료를 따로 만들고 사용한 연결과 테스트에서 생성한 데이터를 정리한다. 서로 다른 연결에서 커밋하는 동시성 검수에는 전용 스키마와 격리된 테스트 데이터를 사용한다.
-3. **T010 · PR에서 자동 검수 실행** — `.github/workflows/tests.yml`에 기본 브랜치 대상 PR, Linux 러너, MySQL 8.4 서비스 컨테이너, Python 3.12 설정을 작성한다. `backend/requirements.txt`가 없으면 사유를 기록하고 pytest 작업을 건너뛴다. 파일이 있으면 MySQL 준비를 확인하고 `backend/requirements.txt`와 `test/requirements-dev.txt`를 설치한 뒤 테스트 전용 연결값으로 `python -m pytest -v test`를 실행한다. 정상 테스트는 성공, 의도적으로 틀린 단언이나 DB 연결 실패는 실패로 표시되는지 확인한다. 로컬과 CI에서 같은 테스트 명령을 사용한다. 첫 MVP의 기본 브랜치 대상 통합 PR에서 T001·T009 기반, T011·T012 테스트, T013·T014 판매 서비스, T016 화면 연동을 함께 반영한 뒤 Checks에서 전체 pytest 통과를 확인한다.
+3. **T010 · PR에서 자동 검수 실행** — `.github/workflows/tests.yml`은 기본 브랜치 대상 PR에서 Linux 러너, MySQL 8.4 서비스 컨테이너, Python 3.12를 사용한다. `backend/requirements.txt`가 없으면 사유를 기록하고 pytest 작업을 건너뛴다. 현재는 파일이 있으면 두 의존성 파일을 설치한 뒤 테스트 전용 DB에서 `python -m pytest -v test/test_environment.py`로 T003 연결 검사만 실행한다. 첫 MVP의 기본 브랜치 대상 통합 PR에서 T001·T009 기반, T011·T012 테스트, T013·T014 판매 서비스, T016 화면 연동을 함께 반영하고, 로컬과 CI에서 `python -m pytest -v test` 전체 실행으로 전환한다. 정상 테스트는 성공, 의도적으로 틀린 단언이나 DB 연결 실패는 실패로 표시되는지 확인하고 Checks에서 전체 pytest 통과를 확인한다.
 
 ### US1 · 상품·재고·판매
 
@@ -183,4 +183,4 @@ flowchart LR
 | MySQL·Flask 준비 자료 | `setUp`, `addCleanup`과 `test/helpers.py`로 재사용 | `@pytest.fixture`를 테스트 함수 인자로 받아 DB 연결·클라이언트·고정 시계를 필요한 테스트에 재사용하기 편하다. |
 | 여러 경계값 반복 | 반복문과 `subTest()`로 확인한다. | `@pytest.mark.parametrize`로 재고 2개·6개, 기한 3일·4일, 개당 이익 경계를 각각 수집하고 표시한다. |
 
-**테스트 도구는 `pytest`로 확정한다.** MySQL 테스트 데이터와 Flask 클라이언트는 픽스처로 재사용하고, 금액·기한·수량 경계값은 `@pytest.mark.parametrize`로 검증한다. 로컬과 GitHub Actions에서 `python -m pytest -v test`를 실행한다. [pytest 픽스처](https://docs.pytest.org/en/stable/how-to/fixtures.html) · [pytest 반복 입력](https://docs.pytest.org/en/stable/how-to/parametrize.html)
+**테스트 도구는 `pytest`로 확정한다.** MySQL 테스트 데이터와 Flask 클라이언트는 픽스처로 재사용하고, 금액·기한·수량 경계값은 `@pytest.mark.parametrize`로 검증한다. T010에서 로컬과 GitHub Actions의 전체 검수 명령으로 `python -m pytest -v test`를 사용한다. [pytest 픽스처](https://docs.pytest.org/en/stable/how-to/fixtures.html) · [pytest 반복 입력](https://docs.pytest.org/en/stable/how-to/parametrize.html)
