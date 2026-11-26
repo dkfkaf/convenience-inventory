@@ -31,7 +31,10 @@ python -m pip install -r backend/requirements.txt -r test/requirements-dev.txt
 python -m pytest -v test
 ```
 
-[GitHub Actions 워크플로](.github/workflows/tests.yml)는 `main` 대상 PR에서 MySQL 8.4와 전체 pytest를 실행해요.
+`main` 대상 PR에서는 다음 GitHub Actions 검사를 각각 실행해요.
+
+- [DB 스키마](.github/workflows/db.yml)는 새 MySQL 8.4 테스트 DB에서 `db/schema.sql`을 적용해 테이블 6개, 재적용 후 데이터 보존, 대표 제약 위반 거부를 확인해요.
+- [백엔드 pytest](.github/workflows/tests.yml)는 `backend/requirements.txt`가 있을 때 별도의 MySQL 8.4 테스트 DB에서 전체 pytest를 실행해요. 파일이 아직 없으면 사유를 워크플로 요약에 남기고 pytest 작업을 `skipped`로 표시해요.
 
 ## GitHub 협업
 
@@ -60,8 +63,10 @@ python -m pytest -v test
 | WBS | 작업 ID | 작업 | 기간 | 평일 | 선행 WBS | 완료 기준 | 진행 상태 |
 | --- | --- | --- | --- | ---: | --- | --- | --- |
 | `DB01` | `T004` | 상품·재고로트·판매 테이블 | 11/23~11/24 | 2 | — | 기본 키, FK, 수량 제약이 있는 3개 테이블 DDL 준비 | 완료 |
-| `DB02` | `T005` | 날짜 확인·폐기·변동 및 인덱스 | 11/25 | 1 | `DB01` | 11/25에 6개 테이블 DDL 완성 및 백엔드 인계 | 예정 |
+| `DB02` | `T005` | 날짜 확인·폐기·변동 및 인덱스 | 11/25 | 1 | `DB01` | 11/25에 6개 테이블 DDL 완성 및 백엔드 인계 | 완료 |
 | `DB03` | 협업 | 통합 검수와 DB 이슈 지원 | 12/14 | 1 | `DB02`, `QA11` | 시연 DB 초기화, 제약·데이터 문제 확인과 수정 지원 | 예정 |
+
+DB01·DB02를 `main`에 반영하고 T006 초기화 절차를 인계했어요. PR 작성자는 별도 MySQL 8.4.13 테스트 스키마에서 60건 통과를 보고했어요. 당시 GitHub Actions는 백엔드 의존성 설치 단계에서 실패해 pytest를 실행하지 못했어요. [스키마 PR #1](https://github.com/dkfkaf/convenience-inventory/pull/1) · [기존 Actions 실행](https://github.com/dkfkaf/convenience-inventory/actions/runs/45352403565)
 
 ### 프론트엔드
 

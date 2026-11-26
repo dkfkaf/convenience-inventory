@@ -9,8 +9,31 @@ permissions:
   contents: read
 
 jobs:
+  prerequisites:
+    name: Check backend prerequisites
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.requirements.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check backend requirements
+        id: requirements
+        shell: pwsh
+        run: |
+          if (Test-Path -LiteralPath 'backend/requirements.txt' -PathType Leaf) {
+            'ready=true' >> $env:GITHUB_OUTPUT
+          } else {
+            'ready=false' >> $env:GITHUB_OUTPUT
+            Write-Output '::notice::pytest skipped: backend/requirements.txt is missing (T001).'
+            'pytest skipped: `backend/requirements.txt` is missing (T001).' >> $env:GITHUB_STEP_SUMMARY
+          }
+
   tests:
     name: pytest (MySQL 8.4)
+    needs: prerequisites
+    if: ${{ needs.prerequisites.outputs.ready == 'true' }}
     runs-on: ubuntu-latest
     services:
       mysql:
