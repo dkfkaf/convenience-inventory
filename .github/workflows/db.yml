@@ -1,0 +1,40 @@
+name: Database
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  schema:
+    name: Schema (MySQL 8.4)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          # Credentials are only used by the disposable schema CI database.
+          MYSQL_ROOT_PASSWORD: schema-ci-root-local-only
+          MYSQL_DATABASE: convenience_inventory_schema_ci
+          MYSQL_USER: schema_ci
+          MYSQL_PASSWORD: schema-ci-local-only
+        options: >-
+          --health-cmd "mysqladmin ping --host=127.0.0.1 --protocol=TCP --silent"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Verify database schema
+        env:
+          MYSQL_CONTAINER_ID: ${{ job.services.mysql.id }}
+          MYSQL_PWD: schema-ci-local-only
+        run: |
+          bash db/test-schema.sh docker exec -i --env MYSQL_PWD "$MYSQL_CONTAINER_ID" mysql \
+            --host=127.0.0.1 --protocol=TCP --user=schema_ci --database=convenience_inventory_schema_ci
